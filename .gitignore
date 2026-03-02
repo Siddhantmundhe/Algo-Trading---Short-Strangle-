@@ -1,0 +1,18 @@
+﻿# Python cache
+__pycache__/
+*.pyc
+
+# Env
+.env
+.venv/
+
+# Data artifacts
+data/raw/
+data/processed/
+reports/*.csv
+reports/*.png
+reports/*.json
+
+# IDE
+.vscode/
+.idea/

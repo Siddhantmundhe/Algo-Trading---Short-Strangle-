@@ -1,0 +1,17 @@
+{
+  "base_config": "configs/backtest/strangle_v1.json",
+  "output_full_csv": "nifty/sweeps/sweep_results.csv",
+  "output_top20_json": "nifty/sweeps/sweep_top20.json",
+  "grid": {
+    "strike_method": ["premium_target", "fixed_distance", "delta_target"],
+    "entry_time": ["09:20", "09:30", "09:45", "10:00"],
+    "premium_target_per_leg": [40, 50, 60, 70, 80],
+    "premium_band": [10, 15, 20],
+    "fixed_distance_points": [200, 300, 400, 500],
+    "target_delta_ce": [0.15, 0.2, 0.25],
+    "target_delta_pe": [-0.15, -0.2, -0.25],
+    "per_leg_sl_pct": [30, 40, 50],
+    "combined_mtm_sl_rupees": [2000, 3000, 4000],
+    "combined_mtm_target_rupees": [1500, 2500, 3500]
+  }
+}

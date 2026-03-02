@@ -1,0 +1,17 @@
+{
+  "base_config": "configs/backtest/strangle_banknifty_v1.json",
+  "output_full_csv": "banknifty/sweeps/sweep_results_sample.csv",
+  "output_top20_json": "banknifty/sweeps/sweep_top20_sample.json",
+  "grid": {
+    "strike_method": ["delta_target"],
+    "entry_time": ["09:20", "09:30", "10:00"],
+    "premium_target_per_leg": [60],
+    "premium_band": [20],
+    "fixed_distance_points": [300],
+    "target_delta_ce": [0.1, 0.15, 0.2, 0.25],
+    "target_delta_pe": [-0.1, -0.15, -0.2, -0.25],
+    "per_leg_sl_pct": [25, 30, 35, 40],
+    "combined_mtm_sl_rupees": [2500, 3500, 4500],
+    "combined_mtm_target_rupees": [1500, 2500, 3500]
+  }
+}

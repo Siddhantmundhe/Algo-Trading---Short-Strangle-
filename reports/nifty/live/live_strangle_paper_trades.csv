@@ -1,0 +1,2 @@
+trade_date,entry_time,exit_time,expiry,ce_symbol,pe_symbol,ce_strike,pe_strike,ce_entry,pe_entry,ce_exit,pe_exit,ce_exit_reason,pe_exit_reason,gross_pnl_rupees,costs_rupees,net_pnl_rupees,combined_exit_reason
+2026-03-02,2026-03-02 09:25:05.914578+05:30,2026-03-02 09:47:09.695365+05:30,2026-03-02,NIFTY2630224900CE,NIFTY2630224900PE,24900.0,24900.0,94.6,114.55,122.97999999999999,58.5,LEG_SL,COMBINED_TGT,1798.5500000000002,100.0,1698.5500000000002,COMBINED_TGT
