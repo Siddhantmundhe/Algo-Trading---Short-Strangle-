@@ -7,11 +7,12 @@ __pycache__/
 .venv/
 
 # Data artifacts
-data/raw/
-data/processed/
-reports/*.csv
-reports/*.png
-reports/*.json
+data/**/*.csv
+data/**/*.parquet
+data/**/*.feather
+reports/**
+!reports/.gitkeep
+!data/.gitkeep
 
 # IDE
 .vscode/

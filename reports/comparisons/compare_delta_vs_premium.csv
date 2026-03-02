@@ -1,3 +1,0 @@
-variant,trades,net_pnl,gross_pnl,max_drawdown,win_rate,profit_factor,report_path
-delta_target_015,27,21515.749999999996,24215.75,-3233.000000000002,74.07407407407408,2.303352919796462,C:\Users\siddh\nifty-options-lab\reports\cmp_delta_target_015.csv
-premium_target_60,27,-644.0000000000032,2055.9999999999973,-5016.500000000001,48.148148148148145,0.941141525385002,C:\Users\siddh\nifty-options-lab\reports\cmp_premium_target_60.csv
