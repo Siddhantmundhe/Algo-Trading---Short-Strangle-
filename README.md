@@ -12,7 +12,7 @@ Research repo for NIFTY and BANKNIFTY short-strangle research with backtesting, 
 - `data/`: cached historical datasets
 - `configs/backtest/`: backtest configs
 - `configs/sweep/`: sweep configs
-- `configs/live/`: paper-live configs
+- `configs/live/`: paper and real-live runner configs
 - `src/engine/`: simulation engine
 - `src/strategies/`: strategy definitions
 - `src/analytics/`: metrics and report helpers
@@ -32,6 +32,8 @@ python scripts\run_sweep.py --config configs\sweep\strangle_sweep_v1.json
 python scripts\run_sweep.py --config configs\sweep\strangle_sweep_banknifty_delta_v1.json --sample-random 120 --seed 42
 python scripts\live_strangle_paper.py --config configs\live\strangle_live_top2.json
 python scripts\live_strangle_paper.py --config configs\live\strangle_live_banknifty_top2.json
+python scripts\live_strangle_runner.py --config configs\live\strangle_live_nifty_orders_v1.json --mode live --confirm-live YES_LIVE
+python scripts\live_strangle_runner.py --config configs\live\strangle_live_banknifty_orders_v1.json --mode live --confirm-live YES_LIVE
 ```
 
 ## Required Data
@@ -60,4 +62,5 @@ Optional columns:
 
 ## Notes
 - This repo is research-first. Paper/live execution comes after robust out-of-sample validation.
+- `live_strangle_runner.py` places real orders in `--mode live`.
 - Do not commit API secrets or tokens.
