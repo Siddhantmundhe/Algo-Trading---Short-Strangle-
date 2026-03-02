@@ -32,6 +32,8 @@ python scripts\run_sweep.py --config configs\sweep\strangle_sweep_v1.json
 python scripts\run_sweep.py --config configs\sweep\strangle_sweep_banknifty_delta_v1.json --sample-random 120 --seed 42
 python scripts\live_strangle_paper.py --config configs\live\strangle_live_top2.json
 python scripts\live_strangle_paper.py --config configs\live\strangle_live_banknifty_top2.json
+python scripts\pre_open_healthcheck.py --config configs\live\strangle_live_nifty_orders_v1.json
+python scripts\pre_open_healthcheck.py --config configs\live\strangle_live_banknifty_orders_v1.json
 python scripts\live_strangle_runner.py --config configs\live\strangle_live_nifty_orders_v1.json --mode live --confirm-live YES_LIVE
 python scripts\live_strangle_runner.py --config configs\live\strangle_live_banknifty_orders_v1.json --mode live --confirm-live YES_LIVE
 ```
@@ -63,4 +65,5 @@ Optional columns:
 ## Notes
 - This repo is research-first. Paper/live execution comes after robust out-of-sample validation.
 - `live_strangle_runner.py` places real orders in `--mode live`.
+- Live safety controls in config: `max_daily_loss_rupees`, `max_consecutive_losses`, `live_require_confirm`.
 - Do not commit API secrets or tokens.

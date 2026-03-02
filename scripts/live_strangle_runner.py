@@ -33,6 +33,8 @@ class Leg:
     exit_reason: Optional[str] = None
     entry_order_id: Optional[str] = None
     exit_order_id: Optional[str] = None
+    entry_fill_source: str = "ltp"
+    exit_fill_source: str = "ltp"
 
 
 def now_ist() -> pd.Timestamp:
@@ -234,6 +236,51 @@ def place_option_market_order(
     return str(order_id)
 
 
+def reconcile_order_fill_price(
+    kite: KiteConnect,
+    order_id: str,
+    fallback_price: float,
+    retries: int = 4,
+    sleep_seconds: float = 0.8,
+) -> Tuple[float, str]:
+    """
+    Reconcile executed price using orderbook/trades.
+    Returns (price, source).
+    """
+    oid = str(order_id)
+    for _ in range(max(1, int(retries))):
+        try:
+            hist = kite.order_history(oid)
+            if hist:
+                last = hist[-1]
+                status = str(last.get("status", "")).upper()
+                avg_px = float(last.get("average_price") or 0.0)
+                if status == "COMPLETE" and avg_px > 0:
+                    return avg_px, "order_history"
+        except Exception:
+            pass
+
+        try:
+            trades = kite.order_trades(oid)
+            if trades:
+                total_qty = 0
+                weighted = 0.0
+                for t in trades:
+                    q = int(t.get("filled_quantity") or t.get("quantity") or 0)
+                    px = float(t.get("average_price") or t.get("fill_price") or 0.0)
+                    if q > 0 and px > 0:
+                        total_qty += q
+                        weighted += q * px
+                if total_qty > 0:
+                    return weighted / total_qty, "order_trades"
+        except Exception:
+            pass
+
+        time.sleep(float(sleep_seconds))
+
+    return float(fallback_price), "ltp_fallback"
+
+
 def get_ltp_map(kite: KiteConnect, symbols: List[str]) -> Dict[str, float]:
     keys = [f"NFO:{s}" for s in symbols]
     q = kite.quote(keys)
@@ -281,6 +328,7 @@ def main() -> None:
     strike_span_steps = int(cfg.get("strike_span_steps", 12))
     max_trades = int(cfg.get("max_trades_per_day", 1))
     max_daily_loss = float(cfg.get("max_daily_loss_rupees", 3000))
+    max_consecutive_losses = int(cfg.get("max_consecutive_losses", 2))
 
     out_default = "live_strangle_live_trades.csv" if mode == "live" else "live_strangle_paper_trades.csv"
     out_csv = ROOT / "reports" / str(cfg.get("live_output_name", out_default))
@@ -289,6 +337,8 @@ def main() -> None:
     last_entry_candle: Optional[pd.Timestamp] = None
     trades_today = 0
     closed_pnl = 0.0
+    consecutive_losses = 0
+    halt_entries = False
     open_trade: Optional[Dict[str, Any]] = None
 
     print("Running strangle loop. Press Ctrl+C to stop.")
@@ -300,6 +350,8 @@ def main() -> None:
             last_entry_candle = None
             trades_today = 0
             closed_pnl = 0.0
+            consecutive_losses = 0
+            halt_entries = False
             open_trade = None
             print(f"New day: {trade_day}")
 
@@ -358,17 +410,32 @@ def main() -> None:
                                     product=live_product,
                                 )
                                 leg.exit_order_id = oid
+                                px, src = reconcile_order_fill_price(kite, oid, ltp)
+                                leg.exit_price = float(px)
+                                leg.exit_fill_source = src
                             except Exception as e:
                                 print(f"[exit_order_error] {leg.symbol}: {e}")
                                 continue
                         leg.is_open = False
-                        leg.exit_price = float(ltp)
+                        if mode != "live":
+                            leg.exit_price = float(ltp)
+                            leg.exit_fill_source = "ltp"
 
                 if not ce.is_open and not pe.is_open:
                     gross = leg_realized(ce, qty) + leg_realized(pe, qty)
                     costs = calc_costs(cfg)
                     net = gross - costs
                     closed_pnl += net
+                    if net < 0:
+                        consecutive_losses += 1
+                    else:
+                        consecutive_losses = 0
+
+                    if closed_pnl <= -abs(max_daily_loss):
+                        halt_entries = True
+                    if consecutive_losses >= max(1, max_consecutive_losses):
+                        halt_entries = True
+
                     row = {
                         "execution_mode": mode,
                         "trade_date": day,
@@ -387,21 +454,28 @@ def main() -> None:
                         "pe_entry_order_id": pe.entry_order_id,
                         "ce_exit_order_id": ce.exit_order_id,
                         "pe_exit_order_id": pe.exit_order_id,
+                        "ce_entry_fill_source": ce.entry_fill_source,
+                        "pe_entry_fill_source": pe.entry_fill_source,
+                        "ce_exit_fill_source": ce.exit_fill_source,
+                        "pe_exit_fill_source": pe.exit_fill_source,
                         "ce_exit_reason": ce.exit_reason,
                         "pe_exit_reason": pe.exit_reason,
                         "gross_pnl_rupees": gross,
                         "costs_rupees": costs,
                         "net_pnl_rupees": net,
                         "combined_exit_reason": close_reason or "CLOSED",
+                        "consecutive_losses": consecutive_losses,
+                        "halt_entries": halt_entries,
                     }
                     append_csv(out_csv, row)
                     print(
                         f"CLOSED | mode={mode} net={net:.2f} gross={gross:.2f} "
-                        f"ce={ce.exit_reason} pe={pe.exit_reason} day_pnl={closed_pnl:.2f}"
+                        f"ce={ce.exit_reason} pe={pe.exit_reason} day_pnl={closed_pnl:.2f} "
+                        f"loss_streak={consecutive_losses} halt={halt_entries}"
                     )
                     open_trade = None
 
-            if open_trade is None and trades_today < max_trades and closed_pnl > -abs(max_daily_loss):
+            if open_trade is None and (not halt_entries) and trades_today < max_trades and closed_pnl > -abs(max_daily_loss):
                 under = fetch_underlying_intraday(kite, fut_token, interval)
                 if len(under) >= 2:
                     latest = pd.to_datetime(under.iloc[-2]["datetime"])
@@ -470,6 +544,10 @@ def main() -> None:
                                                     product=live_product,
                                                 )
                                                 ce_leg.entry_order_id = ce_oid
+                                                ce_px, ce_src = reconcile_order_fill_price(kite, ce_oid, ce_entry)
+                                                ce_leg.entry_price = float(ce_px)
+                                                ce_leg.entry_fill_source = ce_src
+                                                ce_leg.sl_price = ce_leg.entry_price * (1 + sl_pct / 100.0)
 
                                                 pe_oid = place_option_market_order(
                                                     kite=kite,
@@ -479,6 +557,10 @@ def main() -> None:
                                                     product=live_product,
                                                 )
                                                 pe_leg.entry_order_id = pe_oid
+                                                pe_px, pe_src = reconcile_order_fill_price(kite, pe_oid, pe_entry)
+                                                pe_leg.entry_price = float(pe_px)
+                                                pe_leg.entry_fill_source = pe_src
+                                                pe_leg.sl_price = pe_leg.entry_price * (1 + sl_pct / 100.0)
                                             except Exception as e:
                                                 print(f"[entry_order_error] {e}")
                                                 if ce_oid and not pe_oid:
