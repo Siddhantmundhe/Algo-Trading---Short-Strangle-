@@ -13,6 +13,7 @@ Research repo for NIFTY and BANKNIFTY short-strangle research with backtesting, 
 - `configs/backtest/`: backtest configs
 - `configs/sweep/`: sweep configs
 - `configs/live/`: paper and real-live runner configs
+- `docs/`: strategy spec, risk controls, methodology, live runbook
 - `src/engine/`: simulation engine
 - `src/strategies/`: strategy definitions
 - `src/analytics/`: metrics and report helpers
@@ -67,3 +68,13 @@ Optional columns:
 - `live_strangle_runner.py` places real orders in `--mode live`.
 - Live safety controls in config: `max_daily_loss_rupees`, `max_consecutive_losses`, `live_require_confirm`.
 - Do not commit API secrets or tokens.
+
+## Documentation Pack
+- `docs/01_strategy_spec.md`
+- `docs/02_data_contract.md`
+- `docs/03_backtest_methodology.md`
+- `docs/04_risk_controls.md`
+- `docs/05_live_runbook.md`
+- `docs/06_post_trade_review.md`
+- `docs/07_results_summary.md`
+- `docs/08_known_limits.md`
