@@ -17,3 +17,6 @@ reports/**
 # IDE
 .vscode/
 .idea/
+
+# Local-only utilities
+scripts/backtest_stock_index_hedge.py
