@@ -8,6 +8,12 @@ Research repo for NIFTY and BANKNIFTY short-strangle research with backtesting, 
 - Backtest style: intraday, portfolio-level PnL with costs
 - Outputs: ranked variants by return + drawdown quality
 
+## Daily Operator Flow
+- Refresh Kite token and verify auth before market use.
+- Run pre-open checks before paper or live execution.
+- Use `run_replay_today.ps1` to fetch a day of candles and replay the live config from stored data.
+- Review generated trade CSVs under `reports/`.
+
 ## Layout
 - `data/`: cached historical datasets
 - `configs/backtest/`: backtest configs
@@ -37,7 +43,24 @@ python scripts\pre_open_healthcheck.py --config configs\live\strangle_live_nifty
 python scripts\pre_open_healthcheck.py --config configs\live\strangle_live_banknifty_orders_v1.json
 python scripts\live_strangle_runner.py --config configs\live\strangle_live_nifty_orders_v1.json --mode live --confirm-live YES_LIVE
 python scripts\live_strangle_runner.py --config configs\live\strangle_live_banknifty_orders_v1.json --mode live --confirm-live YES_LIVE
+.\run_replay_today.ps1
+.\run_replay_today.ps1 -Index BANKNIFTY
+.\run_replay_today.ps1 -Date 2026-03-06
 ```
+
+## Replay Workflow
+Use the replay flow when you want to reconstruct a session from stored candles without having run the paper strategy live that morning.
+
+```powershell
+.\run_replay_today.ps1
+python scripts\replay_from_fetched_data.py --config configs\live\strangle_live_top2.json --date 2026-03-06
+python scripts\session_replay.py --config configs\live\strangle_live_top2.json --date 2026-03-06
+```
+
+What each command does:
+- `run_replay_today.ps1`: fetches one session of candles, stores them into local `data/*.csv`, then replays that date.
+- `replay_from_fetched_data.py`: Python entry point behind the PowerShell wrapper.
+- `session_replay.py`: replays a day that already exists in local data.
 
 ## Required Data
 Backtest expects two CSV files:
@@ -78,3 +101,4 @@ Optional columns:
 - `docs/06_post_trade_review.md`
 - `docs/07_results_summary.md`
 - `docs/08_known_limits.md`
+- `docs/09_daily_workflow.md`

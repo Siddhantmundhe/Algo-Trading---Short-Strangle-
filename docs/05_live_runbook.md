@@ -6,6 +6,7 @@
 3. Auth check (`broker/check_kite_auth.py`).
 4. Run pre-open checks for both live configs.
 5. Confirm no stale `STOP_TRADING.txt`.
+6. If needed later, use `run_replay_today.ps1` to fetch and replay the same session from stored candles.
 
 ## Paper run commands
 ```powershell
@@ -28,5 +29,6 @@ python scripts\live_strangle_runner.py --config configs\live\strangle_live_bankn
 
 ## Post-close
 - Verify trade CSV generated in `reports/nifty/live/` and `reports/banknifty/live/`.
+- Verify replay CSV generated in `reports/replay/` when session replay was used.
 - Summarize net PnL and stop-hit reason.
 - Log next-day action items.
